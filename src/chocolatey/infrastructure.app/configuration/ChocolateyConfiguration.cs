@@ -1,13 +1,13 @@
 ﻿// Copyright © 2017 - 2018 Chocolatey Software, Inc
 // Copyright © 2011 - 2017 RealDimensions Software, LLC
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// 
+//
 // You may obtain a copy of the License at
-// 
+//
 // 	http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,7 +175,7 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         /// <value><c>true</c> for regular output; <c>false</c> for limited output.</value>
         public bool RegularOutput { get; set; }
         /// <summary>
-        /// Gets or sets a value indicating whether console logging should be supressed. 
+        /// Gets or sets a value indicating whether console logging should be supressed.
         /// This is for use by API calls which surface results in alternate forms.
         /// </summary>
         /// <value><c>true</c> for no output; <c>false</c> for regular or limited output.</value>
@@ -222,7 +222,7 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         public string DownloadChecksum64 { get; set; }
         public string DownloadChecksumType { get; set; }
         public string DownloadChecksumType64 { get; set; }
-        
+
         /// <summary>
         ///   Configuration values provided by choco.
         /// </summary>
@@ -269,8 +269,8 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         /// <remarks>
         ///   On .NET 4.0, get error CS0200 when private set - see http://stackoverflow.com/a/23809226/18475
         /// </remarks>
-        public SourcesCommandConfiguration SourceCommand { get;  set; }        
-        
+        public SourcesCommandConfiguration SourceCommand { get;  set; }
+
         /// <summary>
         ///   Default Machine Sources Configuration
         /// </summary>
@@ -485,8 +485,8 @@ NOTE: Hiding sensitive configuration data! Please double and triple
     {
         public string Name { get; set; }
         public FeatureCommandType Command { get; set; }
-    }    
-    
+    }
+
     [Serializable]
     public sealed class ConfigCommandConfiguration
     {
@@ -530,8 +530,8 @@ NOTE: Hiding sensitive configuration data! Please double and triple
     {
         public string Key { get; set; }
         //DisableBuffering?
-    } 
-    
+    }
+
     [Serializable]
     public sealed class ProxyConfiguration
     {
@@ -545,5 +545,13 @@ NOTE: Hiding sensitive configuration data! Please double and triple
     [Serializable]
     public sealed class ExportCommandConfiguration
     {
+        public ExportCommandConfiguration()
+        {
+            OutputFilePath = "packages.config";
+        }
+
+        public bool IncludeVersionNumbers { get; set; }
+
+        public string OutputFilePath { get; set; }
     }
 }

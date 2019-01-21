@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Xml;
 using chocolatey.infrastructure.app.attributes;
 using chocolatey.infrastructure.app.configuration;
 using chocolatey.infrastructure.app.services;
 using chocolatey.infrastructure.commandline;
 using chocolatey.infrastructure.commands;
+using chocolatey.infrastructure.filesystem;
 
-// TODO: Don't output list of packages to console
 // TODO: Update top level help document with export command
 namespace chocolatey.infrastructure.app.commands
 {
@@ -16,15 +18,24 @@ namespace chocolatey.infrastructure.app.commands
     public class ChocolateyExportCommand : ICommand
     {
         private readonly INugetService _nugetService;
+        private readonly IFileSystem _fileSystem;
 
-        public ChocolateyExportCommand(INugetService nugetService)
+        public ChocolateyExportCommand(INugetService nugetService, IFileSystem fileSystem)
         {
             _nugetService = nugetService;
+            _fileSystem = fileSystem;
         }
 
         public void configure_argument_parser(OptionSet optionSet, ChocolateyConfiguration configuration)
         {
-            // TODO: Add optionset for two new arguments
+            optionSet
+                .Add("o=|output-file-path=",
+                     "Output File Path - the path to where the list of currently installed packages should be saved. Defaults to packages.config.",
+                     option => configuration.ExportCommand.OutputFilePath = option.remove_surrounding_quotes())
+                .Add("include-version-numbers",
+                     "Include Version Numbers - controls whether or not version numbers for each package appear in generated file.  Defaults to false.",
+                     option => configuration.ExportCommand.IncludeVersionNumbers = option != null)
+                ;
         }
 
         public void handle_additional_argument_parsing(IList<string> unparsedArguments, ChocolateyConfiguration configuration)
@@ -33,10 +44,6 @@ namespace chocolatey.infrastructure.app.commands
             {
                 throw new ApplicationException("Please see the help menu for the export command");
             }
-
-            configuration.ListCommand.LocalOnly = true;
-
-            // TODO: Handle parsing of --output-file-name, --include-version-numbers
         }
 
         public void handle_validation(ChocolateyConfiguration configuration)
@@ -57,31 +64,58 @@ namespace chocolatey.infrastructure.app.commands
         public void noop(ChocolateyConfiguration configuration)
         {
             // TODO: Implement this
+            // Perhaps output the XML that would have been generated as a result of the operation
+            // Similar to choco install fiddler --noop
             throw new NotImplementedException();
         }
 
         public void run(ChocolateyConfiguration configuration)
         {
-            var packageResults = _nugetService.list_run(configuration).ToList();
+            var fileExists = _fileSystem.file_exists(configuration.ExportCommand.OutputFilePath);
 
-            var settings = new XmlWriterSettings { Indent = true };
-
-            // TODO: Use FileSystem abstraction, rather than direct
-            using (var xw = XmlWriter.Create("c:/temp/packages.config", settings))
+            if(fileExists && !configuration.Force)
             {
-                xw.WriteStartDocument();
-                xw.WriteStartElement("packages");
+                throw new Exception("File already exists");
+            }
 
-                foreach (var packageResult in packageResults)
+            var packageResults = _nugetService.get_all_installed_packages(configuration);
+
+            var settings = new XmlWriterSettings { Indent = true, Encoding = new UTF8Encoding(false) };
+
+            using (var stringWriter = new StringWriter())
+            {
+                using (var xw = XmlWriter.Create(stringWriter, settings))
                 {
-                    xw.WriteStartElement("package");
-                    xw.WriteAttributeString("id", packageResult.Package.Id);
-                    // TODO: Add parameter to specify whether to include version number or not
-                    //xw.WriteAttributeString("version", package.Version.ToString());
+                    xw.WriteProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+                    xw.WriteStartElement("packages");
+
+                    foreach (var packageResult in packageResults)
+                    {
+                        xw.WriteStartElement("package");
+                        xw.WriteAttributeString("id", packageResult.Package.Id);
+
+                        if (configuration.ExportCommand.IncludeVersionNumbers)
+                        {
+                            xw.WriteAttributeString("version", packageResult.Package.Version.ToString());
+                        }
+
+                        xw.WriteEndElement();
+                    }
+
                     xw.WriteEndElement();
+                    xw.Flush();
                 }
 
-                xw.WriteEndElement();
+                // TODO: Instead of deleting directly, move to backup
+                if (fileExists)
+                {
+                    _fileSystem.delete_file(configuration.ExportCommand.OutputFilePath);
+                }
+
+                _fileSystem.write_file(
+                    configuration.ExportCommand.OutputFilePath,
+                    stringWriter.GetStringBuilder().ToString(),
+                    new UTF8Encoding(false));
             }
         }
     }

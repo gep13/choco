@@ -1589,7 +1589,7 @@ Please see https://chocolatey.org/docs/troubleshooting for more
             }
         }
 
-        private IEnumerable<PackageResult> get_all_installed_packages(ChocolateyConfiguration config)
+        public IEnumerable<PackageResult> get_all_installed_packages(ChocolateyConfiguration config)
         {
             //todo : move to deep copy for get all installed
             //var listConfig = config.deep_copy();
