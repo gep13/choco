@@ -76,7 +76,7 @@ Export all currently installed packages to a file.
 
 This is especially helpful when re-building a machine that was created
 using Chocolatey.  Export all packages to a file, and then re-install
-those packages onto new machine using `choco install packages.config`.
+those packages onto a new machine using `choco install packages.config`.
 ");
             "chocolatey".Log().Info(ChocolateyLoggers.Important, "Usage");
             "chocolatey".Log().Info(@"
@@ -103,7 +103,7 @@ Normal:
  - 0: operation was successful, no issues detected
  - -1 or 1: an error has occurred
 
-If you find other exit codes that we have not yet documented, please
+If you find other exit codes that we have not yet been documented, please
  file a ticket so we can document it at
  https://github.com/chocolatey/choco/issues/new/choose.
 
