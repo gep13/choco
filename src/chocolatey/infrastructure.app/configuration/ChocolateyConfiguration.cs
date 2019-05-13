@@ -50,6 +50,7 @@ namespace chocolatey.infrastructure.app.configuration
             PinCommand = new PinCommandConfiguration();
             OutdatedCommand = new OutdatedCommandConfiguration();
             Proxy = new ProxyConfiguration();
+            ExportCommand = new ExportCommandConfiguration();
 #if DEBUG
             AllowUnofficialBuild = true;
 #endif
@@ -334,6 +335,8 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         /// </remarks>
         public OutdatedCommandConfiguration OutdatedCommand { get; set; }
 
+        public ExportCommandConfiguration ExportCommand { get; set; }
+
         /// <summary>
         /// Configuration related specifically to proxies.
         /// </summary>
@@ -543,5 +546,18 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         public string EncryptedPassword { get; set; }
         public string BypassList { get; set; }
         public bool BypassOnLocal { get; set; }
+    }
+
+    [Serializable]
+    public sealed class ExportCommandConfiguration
+    {
+        public ExportCommandConfiguration()
+        {
+            OutputFilePath = "packages.config";
+        }
+
+        public bool IncludeVersionNumbers { get; set; }
+
+        public string OutputFilePath { get; set; }
     }
 }
