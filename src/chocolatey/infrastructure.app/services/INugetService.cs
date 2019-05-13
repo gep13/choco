@@ -58,5 +58,11 @@ namespace chocolatey.infrastructure.app.services
 		/// </summary>
 		/// <param name="config">The configuration.</param>
 		ConcurrentDictionary<string, PackageResult> get_outdated(ChocolateyConfiguration config);
+
+        /// <summary>
+        ///   Get all installed packages
+        /// </summary>
+        /// <param name="config">The configuration</param>
+        IEnumerable<PackageResult> get_all_installed_packages(ChocolateyConfiguration config);
     }
 }
