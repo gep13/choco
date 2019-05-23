@@ -103,7 +103,7 @@ Normal:
  - 0: operation was successful, no issues detected
  - -1 or 1: an error has occurred
 
-If you find other exit codes that we have not yet been documented, please
+If you find other exit codes that we have not yet documented, please
  file a ticket so we can document it at
  https://github.com/chocolatey/choco/issues/new/choose.
 
