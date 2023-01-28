@@ -18,6 +18,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using chocolatey.infrastructure.app.configuration;
+using chocolatey.infrastructure.app.domain;
 using chocolatey.infrastructure.results;
 
 namespace chocolatey.infrastructure.app.services
@@ -60,6 +61,26 @@ namespace chocolatey.infrastructure.app.services
         /// <param name="packageName">Name of the package.</param>
         void EnsureBackupDirectoryRemoved(string packageName);
 
+<<<<<<< HEAD
+=======
+
+        /// <summary>
+        ///   Get all installed packages
+        /// </summary>
+        /// <param name="config">The configuration</param>
+        IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config);
+
+
+        /// <summary>
+        /// Gets the configuration from remembered arguments
+        /// </summary>
+        /// <param name="config">The original configuration.</param>
+        /// <param name="packageInfo">The package information.</param>
+        /// <returns>The modified configuration, so it can be used</returns>
+        ChocolateyConfiguration GetPackageConfigFromRememberedArguments(ChocolateyConfiguration config,
+            ChocolateyPackageInformation packageInfo);
+
+>>>>>>> 85ab9168 ((#2886) Switch remembered args to only change local configuration)
 #pragma warning disable IDE0022, IDE1006
         [Obsolete("This overload is deprecated and will be removed in v3.")]
         ConcurrentDictionary<string, PackageResult> get_outdated(ChocolateyConfiguration config);
