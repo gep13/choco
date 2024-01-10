@@ -46,14 +46,22 @@ namespace chocolatey.infrastructure.app.commands
         private readonly IContainerResolver _containerResolver;
         private readonly IRegistryService _registryService;
         private readonly IChocolateyPackageInformationService _packageInfoService;
+        private readonly IChocolateyPackageService _packageService;
 
-        public ChocolateyExportCommand(INugetService nugetService, IFileSystem fileSystem, IContainerResolver containerResolver, IRegistryService registryService, IChocolateyPackageInformationService packageInfoService)
+        public ChocolateyExportCommand(
+            INugetService nugetService,
+            IFileSystem fileSystem,
+            IContainerResolver containerResolver,
+            IRegistryService registryService,
+            IChocolateyPackageInformationService packageInfoService,
+            IChocolateyPackageService packageService)
         {
             _nugetService = nugetService;
             _fileSystem = fileSystem;
             _containerResolver = containerResolver;
             _registryService = registryService;
             _packageInfoService = packageInfoService;
+            _packageService = packageService;
         }
 
         public void ConfigureArgumentParser(OptionSet optionSet, ChocolateyConfiguration configuration)
@@ -71,6 +79,9 @@ namespace chocolatey.infrastructure.app.commands
                 .Add("include-alternative-sources",
                      "IncludeAlternativeSources - Includes software from alternative sources which are managed by Chocolatey CLI.",
                      option => configuration.ExportCommand.IncludeAlternativeSources = option != null)
+                .Add("include-arguments|include-remembered-arguments",
+                    "Include Remembered Arguments - controls whether or not remembered arguments for each package appear in generated file.  Defaults to false. Available in 2.3.0+",
+                    option => configuration.ExportCommand.IncludeRememberedPackageArguments = option != null)
                 ;
         }
 
@@ -114,12 +125,14 @@ those packages onto new machine using `choco install packages.config`.
             "chocolatey".Log().Info(@"
     choco export
     choco export --include-version-numbers
+    choco export --include-version-numbers --include-remembered-arguments
     choco export ""'c:\temp\packages.config'""
     choco export ""'c:\temp\packages.config'"" --include-version-numbers
     choco export -o=""'c:\temp\packages.config'""
     choco export -o=""'c:\temp\packages.config'"" --include-version-numbers
     choco export --output-file-path=""'c:\temp\packages.config'""
     choco export --output-file-path=""'c:\temp\packages.config'"" --include-version-numbers
+    choco export --output-file-path=""""'c:\temp\packages.config'"""" --include-remembered-arguments
 
 NOTE: See scripting in the command reference (`choco -?`) for how to
  write proper scripts and integrations.
@@ -150,13 +163,15 @@ If you find other exit codes that we have not yet documented, please
 
         public void DryRun(ChocolateyConfiguration configuration)
         {
-            this.Log().Info("Export would have been with options: {0} Output File Path={1}{0} Include Version Numbers:{2}".FormatWith(Environment.NewLine, configuration.ExportCommand.OutputFilePath, configuration.ExportCommand.IncludeVersionNumbers));
+            this.Log().Info("Export would have been with options: {0} Output File Path={1}{0} Include Version Numbers:{2}{0} Include Remembered Arguments: {3}".FormatWith(Environment.NewLine, configuration.ExportCommand.OutputFilePath, configuration.ExportCommand.IncludeVersionNumbers, configuration.ExportCommand.IncludeRememberedPackageArguments));
         }
 
         public void Run(ChocolateyConfiguration configuration)
         {
             var installedPackages = _nugetService.GetInstalledPackages(configuration);
             var xmlWriterSettings = new XmlWriterSettings { Indent = true, Encoding = new UTF8Encoding(false) };
+
+            configuration.CreateBackup();
 
             FaultTolerance.TryCatchWithLoggingException(
                 () =>
@@ -181,6 +196,93 @@ If you find other exit codes that we have not yet documented, please
                                 }
 
                                 xw.WriteAttributeString("sourceType", "nuget");
+
+                                if (configuration.ExportCommand.IncludeRememberedPackageArguments)
+                                {
+                                    var pkgInfo = _packageInfoService.Get(packageResult.PackageMetadata);
+                                    configuration.Features.UseRememberedArgumentsForUpgrades = true;
+                                    var rememberedConfig =  _nugetService.GetPackageConfigFromRememberedArguments(configuration, pkgInfo);
+
+                                    // Mirrors the arguments captured in ChocolateyPackageService.CaptureArguments()
+                                    if (configuration.Prerelease)
+                                    {
+                                        packageElement.Prerelease = true;
+                                    }
+
+                                    if (configuration.IgnoreDependencies)
+                                    {
+                                        packageElement.IgnoreDependencies = true;
+                                    }
+
+                                    if (configuration.ForceX86)
+                                    {
+                                        packageElement.ForceX86 = true;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.InstallArguments))
+                                    {
+                                        packageElement.InstallArguments = configuration.InstallArguments;
+                                    }
+
+                                    if (configuration.OverrideArguments)
+                                    {
+                                        packageElement.OverrideArguments = true;
+                                    }
+
+                                    if (configuration.ApplyInstallArgumentsToDependencies)
+                                    {
+                                        packageElement.ApplyInstallArgumentsToDependencies = true;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.PackageParameters))
+                                    {
+                                        packageElement.PackageParameters = configuration.PackageParameters;
+                                    }
+
+                                    if (configuration.ApplyPackageParametersToDependencies)
+                                    {
+                                        packageElement.ApplyPackageParametersToDependencies = true;
+                                    }
+
+                                    if (configuration.AllowDowngrade)
+                                    {
+                                        packageElement.AllowDowngrade = true;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.SourceCommand.Username))
+                                    {
+                                        packageElement.User = configuration.SourceCommand.Username;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.SourceCommand.Password))
+                                    {
+                                        packageElement.Password = configuration.SourceCommand.Password;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.SourceCommand.Certificate))
+                                    {
+                                        packageElement.Cert = configuration.SourceCommand.Certificate;
+                                    }
+
+                                    if (!string.IsNullOrWhiteSpace(configuration.SourceCommand.CertificatePassword))
+                                    {
+                                        packageElement.CertPassword = configuration.SourceCommand.CertificatePassword;
+                                    }
+
+                                    // Arguments from the global options set
+                                    if (configuration.CommandExecutionTimeoutSeconds != ApplicationParameters.DefaultWaitForExitInSeconds)
+                                    {
+                                        packageElement.ExecutionTimeout = configuration.CommandExecutionTimeoutSeconds;
+                                    }
+
+                                    // This was discussed in the PR, and because it is potentially system specific, it should not be included in the exported file
+                                    // if (!string.IsNullOrWhiteSpace(configuration.CacheLocation)) packageElement.CacheLocation = configuration.CacheLocation;
+                                    // if (configuration.Features.FailOnStandardError) packageElement.FailOnStderr = true;
+                                    // if (!configuration.Features.UsePowerShellHost) packageElement.UseSystemPowershell = true;
+
+                                    // Make sure to reset the configuration so as to be able to parse the next set of remembered arguments
+                                    configuration.RevertChanges();
+                                }
 
                                 packagesConfig.Packages.Add(packageElement);
                             }
