@@ -97,6 +97,9 @@ namespace chocolatey.infrastructure.app.commands
                 .Add("i|includeprograms|include-programs",
                      "IncludePrograms - Includes software from Programs and Features not being managed by Chocolatey CLI.",
                      option => configuration.ListCommand.IncludeRegistryPrograms = option != null)
+                .Add("include-alternative-sources",
+                     "IncludeAlternativeSources - Includes software from alternative sources which are managed by Chocolatey CLI.",
+                     option => configuration.ListCommand.IncludeAlternativeSources = option != null)
                 .Add("version=",
                      "Version - Specific version of a package to return.",
                      option => configuration.Version = option.UnquoteSafe())

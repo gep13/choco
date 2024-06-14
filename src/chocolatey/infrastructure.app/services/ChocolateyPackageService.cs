@@ -299,13 +299,57 @@ Did you know Pro / Business automatically syncs with Programs and
                 }
             }
 
-            if (config.RegularOutput)
+            if (config.ListCommand.LocalOnly && config.ListCommand.IncludeRegistryPrograms)
             {
-                if (config.ListCommand.LocalOnly && config.ListCommand.IncludeRegistryPrograms)
+                foreach (var installed in ReportRegistryPrograms(config, packages))
                 {
-                    foreach (var installed in ReportRegistryPrograms(config, packages))
+                    yield return installed;
+                }
+            }
+
+            if (config.ListCommand.IncludeAlternativeSources)
+            {
+                foreach (var sourceRunner in _containerResolver.ResolveAll<IListSourceRunner>())
+                {
+                    if (sourceRunner.SourceType == "dotnet")
                     {
-                        yield return installed;
+                        if (config.RegularOutput)
+                        {
+                            this.Log().Info(() => "");
+                        }
+
+                        var count = 0;
+
+                        foreach (var alternativeSourcePackage in sourceRunner.List(config))
+                        {
+                            var logger = config.Verbose ? ChocolateyLoggers.Important : ChocolateyLoggers.Normal;
+
+                            if (config.RegularOutput)
+                            {
+                                this.Log().Info(logger, () => "{0} {1}".FormatWith(alternativeSourcePackage.Identity.Id, alternativeSourcePackage.Identity.Version.ToFullStringChecked()));
+                            }
+                            else
+                            {
+                                this.Log().Info(logger, () => "{0}|{1}|dotnet".FormatWith(alternativeSourcePackage.Identity.Id, alternativeSourcePackage.Identity.Version.ToFullStringChecked()));
+                            }
+
+                            count++;
+                        }
+
+                        if (config.RegularOutput)
+                        {
+                            this.Log().Warn(() => @"{0} applications managed by .NET Global Tools.".FormatWith(count));
+                        }
+                    }
+
+                    if (sourceRunner.SourceType == "windowsfeatures")
+                    {
+                        if (config.RegularOutput)
+                        {
+                            this.Log().Info(() => "");
+                        }
+
+                        sourceRunner.List(config);
                     }
                 }
             }
@@ -323,16 +367,24 @@ Did you know Pro / Business automatically syncs with Programs and
                      !itemsToRemoveFromMachine.Any(pkg => pkg.RegistrySnapshot.RegistryKeys.Any(k => k.DisplayName.IsEqualTo(p.DisplayName))) &&
                      !p.KeyPath.ContainsSafe("choco-")).OrderBy(p => p.DisplayName).Distinct();
 
-            this.Log().Info(() => "");
+            if(config.RegularOutput)
+            {
+                this.Log().Info(() => "");
+            }
+
             foreach (var key in machineInstalled)
             {
                 if (config.RegularOutput)
                 {
-                    this.Log().Info("{0}|{1}".FormatWith(key.DisplayName, key.DisplayVersion));
+                    this.Log().Info("{0} {1}".FormatWith(key.DisplayName, key.DisplayVersion));
                     if (config.Verbose)
                     {
                         this.Log().Info(" InstallLocation: {0}{1} Uninstall:{2}".FormatWith(key.InstallLocation.ToStringSafe().EscapeCurlyBraces(), Environment.NewLine, key.UninstallString.ToStringSafe().EscapeCurlyBraces()));
                     }
+                }
+                else
+                {
+                    this.Log().Info("{0}|{1}|programs".FormatWith(key.DisplayName, key.DisplayVersion));
                 }
                 count++;
 
