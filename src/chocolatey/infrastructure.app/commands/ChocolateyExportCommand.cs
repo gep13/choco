@@ -52,6 +52,12 @@ namespace chocolatey.infrastructure.app.commands
                 .Add("include-version-numbers|include-version",
                      "Include Version Numbers - controls whether or not version numbers for each package appear in generated file.  Defaults to false.",
                      option => configuration.ExportCommand.IncludeVersionNumbers = option != null)
+                .Add("i|includeprograms|include-programs",
+                     "IncludePrograms - Includes software from Programs and Features not being managed by Chocolatey CLI.",
+                     option => configuration.ExportCommand.IncludeRegistryPrograms = option != null)
+                .Add("include-alternative-sources",
+                     "IncludeAlternativeSources - Includes software from alternative sources which are managed by Chocolatey CLI.",
+                     option => configuration.ExportCommand.IncludeAlternativeSources = option != null)
                 ;
         }
 

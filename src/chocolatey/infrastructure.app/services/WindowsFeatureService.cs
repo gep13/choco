@@ -26,6 +26,7 @@ using chocolatey.infrastructure.commands;
 using chocolatey.infrastructure.logging;
 using chocolatey.infrastructure.results;
 using chocolatey.infrastructure.platforms;
+using System.Net;
 
 namespace chocolatey.infrastructure.app.services
 {
@@ -201,6 +202,9 @@ namespace chocolatey.infrastructure.app.services
             var args = BuildArguments(config, _listArguments);
             var packageResults = new List<PackageResult>();
 
+            var nameStateRegex = new Regex(@"(.*)\|(.*)", RegexOptions.Compiled);
+            var count = 0;
+
             Environment.ExitCode = _commandExecutor.Execute(
                 _exePath,
                 args,
@@ -214,13 +218,28 @@ namespace chocolatey.infrastructure.app.services
                             return;
                         }
 
-                        if (!config.QuietOutput)
+                        if (nameStateRegex.IsMatch(logMessage))
                         {
-                            this.Log().Info(logMessage.EscapeCurlyBraces());
-                        }
-                        else
-                        {
-                            this.Log().Debug(() => "[{0}] {1}".FormatWith(AppName, logMessage.EscapeCurlyBraces()));
+                            var match = nameStateRegex.Match(logMessage);
+                            if (!match.Groups[0].Value.Contains("-----") && !match.Groups[0].Value.Contains("Feature Name"))
+                            {
+                                if (match.Groups[2].Value.Trim() == "Enabled")
+                                {
+                                    var packageResult = new PackageResult(match.Groups[1].Value.Trim(), "1.0.0", string.Empty);
+                                    packageResults.Add(packageResult);
+
+                                    if(config.RegularOutput)
+                                    {
+                                        this.Log().Info("{0}".FormatWith(packageResult.Identity.Id));
+                                    }
+                                    else
+                                    {
+                                        this.Log().Info("{0}|N/A|windowsfeatures".FormatWith(packageResult.Identity.Id));
+                                    }
+                                    
+                                    count++;
+                                }
+                            }
                         }
                     },
                 stdErrAction: (s, e) =>
@@ -235,6 +254,11 @@ namespace chocolatey.infrastructure.app.services
                 updateProcessPath: false,
                 allowUseWindow: true
                 );
+
+            if (config.RegularOutput)
+            {
+                this.Log().Warn(() => @"{0} features managed with Chocolatey.".FormatWith(count));
+            }
 
             return packageResults;
         }

@@ -585,6 +585,7 @@ NOTE: Hiding sensitive configuration data! Please double and triple
 
         public bool IdOnly { get; set; }
         public bool IncludeRegistryPrograms { get; set; }
+        public bool IncludeAlternativeSources { get; set; }
         public int? Page { get; set; }
         public int PageSize { get; set; }
         public bool Exact { get; set; }
@@ -727,6 +728,10 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         public bool IncludeVersionNumbers { get; set; }
 
         public string OutputFilePath { get; set; }
+
+        public bool IncludeRegistryPrograms { get; set; }
+
+        public bool IncludeAlternativeSources { get; set; }
     }
 
     [Serializable]
