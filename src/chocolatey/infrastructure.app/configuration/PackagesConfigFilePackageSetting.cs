@@ -32,6 +32,9 @@ namespace chocolatey.infrastructure.app.configuration
         [XmlAttribute(AttributeName = "source")]
         public string Source { get; set; }
 
+        [XmlAttribute(AttributeName = "sourceType")]
+        public string SourceType { get; set; }
+
         [XmlAttribute(AttributeName = "version")]
         public string Version { get; set; }
 

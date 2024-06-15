@@ -247,6 +247,11 @@ namespace chocolatey.infrastructure.app.registration
 
             foreach (var interfaceType in serviceType.GetInterfaces())
             {
+                if (interfaceType == typeof(IGetPackagesSourceRunner))
+                {
+                    AddToMultiServices(interfaceType, serviceType);
+                }
+
                 if (interfaceType == typeof(ICountSourceRunner))
                 {
                     AddToMultiServices(interfaceType, serviceType);

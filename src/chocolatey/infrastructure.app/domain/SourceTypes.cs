@@ -60,6 +60,8 @@ namespace chocolatey.infrastructure.app.domain
         /// </summary>
         public const string WindowsFeatures = "windowsfeatures";
 
+        public const string AddRemovePrograms = "programs";
+
 #pragma warning disable IDE0022, IDE1006
         [Obsolete("This overload is deprecated and will be removed in v3.")]
         public const string CYGWIN = Cygwin;

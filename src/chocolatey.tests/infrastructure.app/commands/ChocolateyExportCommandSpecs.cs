@@ -25,6 +25,7 @@ using chocolatey.infrastructure.commandline;
 using chocolatey.infrastructure.filesystem;
 using Moq;
 using FluentAssertions;
+using chocolatey.infrastructure.app.registration;
 
 namespace chocolatey.tests.infrastructure.app.commands
 {
@@ -37,10 +38,13 @@ namespace chocolatey.tests.infrastructure.app.commands
             protected Mock<INugetService> NugetService = new Mock<INugetService>();
             protected Mock<IFileSystem> FileSystem = new Mock<IFileSystem>();
             protected ChocolateyConfiguration Configuration = new ChocolateyConfiguration();
+            protected Mock<IContainerResolver> ContainerResolver = new Mock<IContainerResolver>();
+            protected Mock<IRegistryService> RegistryService = new Mock<IRegistryService>();
+            protected Mock<IChocolateyPackageInformationService> PackageInfoService = new Mock<IChocolateyPackageInformationService>();
 
             public override void Context()
             {
-                Command = new ChocolateyExportCommand(NugetService.Object, FileSystem.Object);
+                Command = new ChocolateyExportCommand(NugetService.Object, FileSystem.Object, ContainerResolver.Object, RegistryService.Object, PackageInfoService.Object);
             }
 
             public void Reset()

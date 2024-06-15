@@ -38,7 +38,7 @@ namespace chocolatey.infrastructure.app.services
     ///   Win 7 - https://technet.microsoft.com/en-us/library/dd744311.aspx
     ///   Maybe Win2003/2008 - http://www.wincert.net/forum/files/file/8-deployment-image-servicing-and-management-dism/ | http://wincert.net/leli55PK/DISM/
     /// </remarks>
-    public sealed class WindowsFeatureService : IBootstrappableSourceRunner, IListSourceRunner, ISearchableSourceRunner, IInstallSourceRunner, IUninstallSourceRunner
+    public sealed class WindowsFeatureService : IGetPackagesSourceRunner, IBootstrappableSourceRunner, IListSourceRunner, ISearchableSourceRunner, IInstallSourceRunner, IUninstallSourceRunner
     {
         private readonly ICommandExecutor _commandExecutor;
         private readonly INugetService _nugetService;
@@ -194,6 +194,56 @@ namespace chocolatey.infrastructure.app.services
             EnsureExecutablePathSet();
             var args = BuildArguments(config, _listArguments);
             this.Log().Info("Would have run '{0} {1}'".FormatWith(_exePath.EscapeCurlyBraces(), args.EscapeCurlyBraces()));
+        }
+
+        public IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config)
+        {
+            EnsureExecutablePathSet();
+            var args = BuildArguments(config, _listArguments);
+            var packageResults = new List<PackageResult>();
+
+            var nameStateRegex = new Regex(@"(.*)\|(.*)", RegexOptions.Compiled);
+
+            Environment.ExitCode = _commandExecutor.Execute(
+                _exePath,
+                args,
+                config.CommandExecutionTimeoutSeconds,
+                _fileSystem.GetCurrentDirectory(),
+                stdOutAction: (s, e) =>
+                {
+                    var logMessage = e.Data;
+                    if (string.IsNullOrWhiteSpace(logMessage))
+                    {
+                        return;
+                    }
+
+                    if (nameStateRegex.IsMatch(logMessage))
+                    {
+                        var match = nameStateRegex.Match(logMessage);
+                        if (!match.Groups[0].Value.Contains("-----") && !match.Groups[0].Value.Contains("Feature Name"))
+                        {
+                            if (match.Groups[2].Value.Trim() == "Enabled")
+                            {
+                                var packageResult = new PackageResult(match.Groups[1].Value.Trim(), "1.0.0", string.Empty);
+                                packageResults.Add(packageResult);
+                            }
+                        }
+                    }
+                },
+                stdErrAction: (s, e) =>
+                {
+                    if (string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        return;
+                    }
+
+                    this.Log().Error(() => "{0}".FormatWith(e.Data.EscapeCurlyBraces()));
+                },
+                updateProcessPath: false,
+                allowUseWindow: true
+                );
+
+            return packageResults;
         }
 
         public IEnumerable<PackageResult> List(ChocolateyConfiguration config)
