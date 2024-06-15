@@ -26,7 +26,7 @@ namespace chocolatey.infrastructure.app.services
 {
     [MultiService]
     [Obsolete("This interface is deprecated and will be removed in v3.")]
-    public interface ISourceRunner : IBootstrappableSourceRunner, ICountSourceRunner, IListSourceRunner, IInstallSourceRunner, IUpgradeSourceRunner, IUninstallSourceRunner
+    public interface ISourceRunner : IBootstrappableSourceRunner, IGetPackagesSourceRunner, ICountSourceRunner, IListSourceRunner, IInstallSourceRunner, IUpgradeSourceRunner, IUninstallSourceRunner
     {
 #pragma warning disable IDE0022, IDE1006
         [Obsolete("This overload is deprecated and will be removed in v3.")]
@@ -63,6 +63,11 @@ namespace chocolatey.infrastructure.app.services
         ///   The type of the source.
         /// </value>
         string SourceType { get; }
+    }
+
+    public interface IGetPackagesSourceRunner : IAlternativeSourceRunner
+    {
+        IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config);
     }
 
     public interface IBootstrappableSourceRunner : IAlternativeSourceRunner

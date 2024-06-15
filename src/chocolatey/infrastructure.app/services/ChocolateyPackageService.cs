@@ -311,45 +311,17 @@ Did you know Pro / Business automatically syncs with Programs and
             {
                 foreach (var sourceRunner in _containerResolver.ResolveAll<IListSourceRunner>())
                 {
-                    if (sourceRunner.SourceType == "dotnet")
+                    if (sourceRunner.SourceType == "windowsfeatures" || sourceRunner.SourceType == "dotnet")
                     {
                         if (config.RegularOutput)
                         {
                             this.Log().Info(() => "");
                         }
-
-                        var count = 0;
 
                         foreach (var alternativeSourcePackage in sourceRunner.List(config))
                         {
-                            var logger = config.Verbose ? ChocolateyLoggers.Important : ChocolateyLoggers.Normal;
-
-                            if (config.RegularOutput)
-                            {
-                                this.Log().Info(logger, () => "{0} {1}".FormatWith(alternativeSourcePackage.Identity.Id, alternativeSourcePackage.Identity.Version.ToFullStringChecked()));
-                            }
-                            else
-                            {
-                                this.Log().Info(logger, () => "{0}|{1}|dotnet".FormatWith(alternativeSourcePackage.Identity.Id, alternativeSourcePackage.Identity.Version.ToFullStringChecked()));
-                            }
-
-                            count++;
+                            yield return alternativeSourcePackage;
                         }
-
-                        if (config.RegularOutput)
-                        {
-                            this.Log().Warn(() => @"{0} applications managed by .NET Global Tools.".FormatWith(count));
-                        }
-                    }
-
-                    if (sourceRunner.SourceType == "windowsfeatures")
-                    {
-                        if (config.RegularOutput)
-                        {
-                            this.Log().Info(() => "");
-                        }
-
-                        sourceRunner.List(config);
                     }
                 }
             }
@@ -460,6 +432,10 @@ Did you know Pro / Business automatically syncs with Programs and
                 {
                     Action<PackageResult, ChocolateyConfiguration> action = (pkg, configuration) => _powershellService.InstallDryRun(pkg);
                     _nugetService.InstallDryRun(packageConfig, action);
+                }
+                else if (packageConfig.SourceType.IsEqualTo(SourceTypes.AddRemovePrograms))
+                {
+                    this.Log().Warn("Skipping addition of application that was installed directly to Add/Remove Programs.");
                 }
                 else
                 {
@@ -847,6 +823,11 @@ package '{0}' - stopping further execution".FormatWith(packageResult.Name));
 
                         results = _nugetService.Install(packageConfig, action, beforeModifyAction);
                     }
+                    else if (packageConfig.SourceType.IsEqualTo(SourceTypes.AddRemovePrograms))
+                    {
+                        this.Log().Warn("Skipping addition of application that was installed directly to Add/Remove Programs.");
+                        results = new ConcurrentDictionary<string, PackageResult>();
+                    }
                     else
                     {
                         results = PerformSourceRunnerFunction<IInstallSourceRunner, ConcurrentDictionary<string, PackageResult>>(packageConfig, runner => runner.Install(packageConfig, null));
@@ -953,12 +934,12 @@ Would have determined packages that are out of date based on what is
             yield return config;
         }
 
-        private bool IsPackagesConfigFile(string packageNames)
+        public bool IsPackagesConfigFile(string packageNames)
         {
             return packageNames.ToStringSafe().EndsWith(".config", StringComparison.OrdinalIgnoreCase) && !packageNames.ToStringSafe().ContainsSafe(";");
         }
 
-        private IEnumerable<ChocolateyConfiguration> GetPackagesFromConfigFile(string packageConfigFile, ChocolateyConfiguration config, ConcurrentDictionary<string, PackageResult> packageInstalls, IEnumerable<IAlternativeSourceRunner> alternativeSourceRunners)
+        public IEnumerable<ChocolateyConfiguration> GetPackagesFromConfigFile(string packageConfigFile, ChocolateyConfiguration config, ConcurrentDictionary<string, PackageResult> packageInstalls, IEnumerable<IAlternativeSourceRunner> alternativeSourceRunners)
         {
             IList<ChocolateyConfiguration> packageConfigs = new List<ChocolateyConfiguration>();
 
@@ -1004,9 +985,9 @@ Would have determined packages that are out of date based on what is
                         packageConfig.ApplyPackageParametersToDependencies = true;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(pkgSettings.Source) && HasSourceType(pkgSettings.Source, alternativeSourceRunners))
+                    if (!string.IsNullOrWhiteSpace(pkgSettings.SourceType) && HasSourceType(pkgSettings.SourceType, alternativeSourceRunners))
                     {
-                        packageConfig.SourceType = pkgSettings.Source;
+                        packageConfig.SourceType = pkgSettings.SourceType;
                     }
 
                     if (pkgSettings.PinPackage)

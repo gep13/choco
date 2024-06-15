@@ -122,6 +122,9 @@ namespace chocolatey.infrastructure.app.services
         /// <returns>results of upgrades</returns>
         ConcurrentDictionary<string, PackageResult> Uninstall(ChocolateyConfiguration config);
 
+        bool IsPackagesConfigFile(string packageNames);
+
+        IEnumerable<ChocolateyConfiguration> GetPackagesFromConfigFile(string packageConfigFile, ChocolateyConfiguration config, ConcurrentDictionary<string, PackageResult> packageInstalls, IEnumerable<IAlternativeSourceRunner> alternativeSourceRunners);
 
 #pragma warning disable IDE0022, IDE1006
         [Obsolete("This overload is deprecated and will be removed in v3.")]

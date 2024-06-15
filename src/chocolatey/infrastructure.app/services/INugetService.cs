@@ -60,13 +60,6 @@ namespace chocolatey.infrastructure.app.services
         /// <param name="packageName">Name of the package.</param>
         void EnsureBackupDirectoryRemoved(string packageName);
 
-
-        /// <summary>
-        ///   Get all installed packages
-        /// </summary>
-        /// <param name="config">The configuration</param>
-        IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config);
-
 #pragma warning disable IDE0022, IDE1006
         [Obsolete("This overload is deprecated and will be removed in v3.")]
         ConcurrentDictionary<string, PackageResult> get_outdated(ChocolateyConfiguration config);

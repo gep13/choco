@@ -28,6 +28,11 @@ using chocolatey.infrastructure.commands;
 using chocolatey.infrastructure.logging;
 using chocolatey.infrastructure.app.services;
 using chocolatey.infrastructure.tolerance;
+using chocolatey.infrastructure.app.registration;
+using System.Linq;
+using chocolatey.infrastructure.results;
+using chocolatey.infrastructure.configuration;
+using System.IO.Packaging;
 
 namespace chocolatey.infrastructure.app.commands
 {
@@ -36,11 +41,17 @@ namespace chocolatey.infrastructure.app.commands
     {
         private readonly INugetService _nugetService;
         private readonly IFileSystem _fileSystem;
+        private readonly IContainerResolver _containerResolver;
+        private readonly IRegistryService _registryService;
+        private readonly IChocolateyPackageInformationService _packageInfoService;
 
-        public ChocolateyExportCommand(INugetService nugetService, IFileSystem fileSystem)
+        public ChocolateyExportCommand(INugetService nugetService, IFileSystem fileSystem, IContainerResolver containerResolver, IRegistryService registryService, IChocolateyPackageInformationService packageInfoService)
         {
             _nugetService = nugetService;
             _fileSystem = fileSystem;
+            _containerResolver = containerResolver;
+            _registryService = registryService;
+            _packageInfoService = packageInfoService;
         }
 
         public void ConfigureArgumentParser(OptionSet optionSet, ChocolateyConfiguration configuration)
@@ -165,7 +176,58 @@ If you find other exit codes that we have not yet documented, please
                                     xw.WriteAttributeString("version", packageResult.PackageMetadata.Version.ToString());
                                 }
 
+                                xw.WriteAttributeString("sourceType", "nuget");
+
                                 xw.WriteEndElement();
+                            }
+
+                            if (configuration.ExportCommand.IncludeRegistryPrograms)
+                            {
+                                var itemsToRemoveFromMachine = packageResults.Select(package => _packageInfoService.Get(package.PackageMetadata)).Where(p => p.RegistrySnapshot != null).ToList();
+
+                                var machineInstalled = _registryService.GetInstallerKeys().RegistryKeys.Where(
+                                    p => p.IsInProgramsAndFeatures() &&
+                                         !itemsToRemoveFromMachine.Any(pkg => pkg.RegistrySnapshot.RegistryKeys.Any(k => k.DisplayName.IsEqualTo(p.DisplayName))) &&
+                                         !p.KeyPath.ContainsSafe("choco-")).OrderBy(p => p.DisplayName).Distinct();
+
+                                foreach (var key in machineInstalled)
+                                {
+                                    xw.WriteStartElement("package");
+                                    xw.WriteAttributeString("id", key.DisplayName);
+
+                                    if (configuration.ExportCommand.IncludeVersionNumbers)
+                                    {
+                                        xw.WriteAttributeString("version", key.DisplayVersion);
+                                    }
+
+                                    xw.WriteAttributeString("sourceType", "programs");
+
+                                    xw.WriteEndElement();
+                                }
+                            }
+
+                            if (configuration.ExportCommand.IncludeAlternativeSources)
+                            {
+                                foreach (var sourceRunner in _containerResolver.ResolveAll<IGetPackagesSourceRunner>())
+                                {
+                                    if (sourceRunner.SourceType == "windowsfeatures" || sourceRunner.SourceType == "dotnet")
+                                    {
+                                        foreach (var package in sourceRunner.GetInstalledPackages(configuration).ToList())
+                                        {
+                                            xw.WriteStartElement("package");
+                                            xw.WriteAttributeString("id", package.Identity.Id);
+
+                                            if (configuration.ExportCommand.IncludeVersionNumbers)
+                                            {
+                                                xw.WriteAttributeString("version", package.Identity.Version.ToString());
+                                            }
+
+                                            xw.WriteAttributeString("sourceType", sourceRunner.SourceType);
+
+                                            xw.WriteEndElement();
+                                        }
+                                    }
+                                }
                             }
 
                             xw.WriteEndElement();
