@@ -25,6 +25,7 @@ using chocolatey.infrastructure.commands;
 using chocolatey.infrastructure.logging;
 using chocolatey.infrastructure.results;
 using chocolatey.infrastructure.platforms;
+using System.IO;
 
 namespace chocolatey.infrastructure.app.services
 {
@@ -156,10 +157,25 @@ namespace chocolatey.infrastructure.app.services
             this.Log().Info("Would have run '{0} {1}'".FormatWith(ExePath.EscapeCurlyBraces(), args.EscapeCurlyBraces()));
         }
 
+        public IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config)
+        {
+            // TODO: Need to put stuff here, similar to Python source
+            return Enumerable.Empty<PackageResult>();
+        }
+
         public IEnumerable<PackageResult> List(ChocolateyConfiguration config)
         {
+            // TODO: Need to have a way to valid that Ruby is installed, similar to Python
+            if (config.RegularOutput)
+            {
+                this.Log().Warn(() => "0 Ruby packages managed with Chocolatey.");
+            }
+
+            return Enumerable.Empty<PackageResult>();
+
             var packageResults = new List<PackageResult>();
             var args = ExternalCommandArgsBuilder.BuildArguments(config, _listArguments);
+            var count = 0;
 
             Environment.ExitCode = _commandExecutor.Execute(
                 ExePath,
@@ -181,6 +197,8 @@ namespace chocolatey.infrastructure.app.services
                         {
                             this.Log().Debug(() => "[{0}] {1}".FormatWith(AppName, logMessage.EscapeCurlyBraces()));
                         }
+
+                        count++;
                     },
                 stdErrAction: (s, e) =>
                     {
@@ -193,6 +211,11 @@ namespace chocolatey.infrastructure.app.services
                     },
                 updateProcessPath: false
                 );
+
+            if (config.RegularOutput)
+            {
+                this.Log().Warn(() => @"{0} Ruby packages managed with Chocolatey.".FormatWith(count));
+            }
 
             return packageResults;
         }

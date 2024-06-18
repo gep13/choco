@@ -210,22 +210,19 @@ If you find other exit codes that we have not yet documented, please
                             {
                                 foreach (var sourceRunner in _containerResolver.ResolveAll<IGetPackagesSourceRunner>())
                                 {
-                                    if (sourceRunner.SourceType == "windowsfeatures" || sourceRunner.SourceType == "dotnet")
+                                    foreach (var package in sourceRunner.GetInstalledPackages(configuration).ToList())
                                     {
-                                        foreach (var package in sourceRunner.GetInstalledPackages(configuration).ToList())
+                                        xw.WriteStartElement("package");
+                                        xw.WriteAttributeString("id", package.Identity.Id);
+
+                                        if (configuration.ExportCommand.IncludeVersionNumbers)
                                         {
-                                            xw.WriteStartElement("package");
-                                            xw.WriteAttributeString("id", package.Identity.Id);
-
-                                            if (configuration.ExportCommand.IncludeVersionNumbers)
-                                            {
-                                                xw.WriteAttributeString("version", package.Identity.Version.ToString());
-                                            }
-
-                                            xw.WriteAttributeString("sourceType", sourceRunner.SourceType);
-
-                                            xw.WriteEndElement();
+                                            xw.WriteAttributeString("version", package.Identity.Version.ToString());
                                         }
+
+                                        xw.WriteAttributeString("sourceType", sourceRunner.SourceType);
+
+                                        xw.WriteEndElement();
                                     }
                                 }
                             }
