@@ -28,13 +28,14 @@ using chocolatey.infrastructure.commands;
 using chocolatey.infrastructure.logging;
 using chocolatey.infrastructure.results;
 using chocolatey.infrastructure.platforms;
+using log4net.Util;
 
 namespace chocolatey.infrastructure.app.services
 {
     /// <summary>
     ///   Alternative Source for Installing Python packages
     /// </summary>
-    public sealed class PythonService : IBootstrappableSourceRunner, IListSourceRunner, IInstallSourceRunner, IUpgradeSourceRunner, IUninstallSourceRunner
+    public sealed class PythonService : IBootstrappableSourceRunner, IGetPackagesSourceRunner, IListSourceRunner, IInstallSourceRunner, IUpgradeSourceRunner, IUninstallSourceRunner
     {
         private readonly ICommandExecutor _commandExecutor;
         private readonly INugetService _nugetService;
@@ -300,11 +301,43 @@ namespace chocolatey.infrastructure.app.services
             this.Log().Info("Would have run '{0} {1}'".FormatWith(_exePath.EscapeCurlyBraces(), args.EscapeCurlyBraces()));
         }
 
+        public IEnumerable<PackageResult> GetInstalledPackages(ChocolateyConfiguration config)
+        {
+            try
+            {
+                EnsureExecutablePathSet();
+            }
+            catch (FileNotFoundException fnfex)
+            {
+                // Since the python executable can't be found, let's return early
+                return Enumerable.Empty<PackageResult>();
+            }
+
+            // TODO: Put stuff in here!
+
+            return Enumerable.Empty<PackageResult>();
+        }
+
         public IEnumerable<PackageResult> List(ChocolateyConfiguration config)
         {
-            EnsureExecutablePathSet();
+            try
+            {
+                EnsureExecutablePathSet();
+            }
+            catch (FileNotFoundException fnfex)
+            {
+                if (config.RegularOutput)
+                {
+                    this.Log().Warn(() => "0 Python packages managed with Chocolatey.");
+                }
+
+                // Since the python executable can't be found, let's return early
+                return Enumerable.Empty<PackageResult>();
+            }
+
             var args = BuildArguments(config, _listArguments);
             var packageResults = new List<PackageResult>();
+            var count = 0;
 
             Environment.ExitCode = _commandExecutor.Execute(
                 _exePath,
@@ -327,6 +360,8 @@ namespace chocolatey.infrastructure.app.services
                         {
                             this.Log().Debug(() => "[{0}] {1}".FormatWith(AppName, logMessage.EscapeCurlyBraces()));
                         }
+
+                        count++;
                     },
                 stdErrAction: (s, e) =>
                     {
@@ -340,6 +375,11 @@ namespace chocolatey.infrastructure.app.services
                 updateProcessPath: false,
                 allowUseWindow: true
                 );
+
+            if (config.RegularOutput)
+            {
+                this.Log().Warn(() => @"{0} Python packages managed with Chocolatey.".FormatWith(count));
+            }
 
             return packageResults;
         }

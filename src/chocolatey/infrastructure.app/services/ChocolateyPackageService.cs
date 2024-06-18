@@ -311,17 +311,14 @@ Did you know Pro / Business automatically syncs with Programs and
             {
                 foreach (var sourceRunner in _containerResolver.ResolveAll<IListSourceRunner>())
                 {
-                    if (sourceRunner.SourceType == "windowsfeatures" || sourceRunner.SourceType == "dotnet")
+                    if (config.RegularOutput)
                     {
-                        if (config.RegularOutput)
-                        {
-                            this.Log().Info(() => "");
-                        }
+                        this.Log().Info(() => "");
+                    }
 
-                        foreach (var alternativeSourcePackage in sourceRunner.List(config))
-                        {
-                            yield return alternativeSourcePackage;
-                        }
+                    foreach (var alternativeSourcePackage in sourceRunner.List(config))
+                    {
+                        yield return alternativeSourcePackage;
                     }
                 }
             }
