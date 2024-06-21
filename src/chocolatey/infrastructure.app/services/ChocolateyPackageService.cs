@@ -982,7 +982,7 @@ Would have determined packages that are out of date based on what is
                         packageConfig.ApplyPackageParametersToDependencies = true;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(pkgSettings.SourceType) && HasSourceType(pkgSettings.SourceType, alternativeSourceRunners))
+                    if ((!string.IsNullOrWhiteSpace(pkgSettings.SourceType) && HasSourceType(pkgSettings.SourceType, alternativeSourceRunners)) || pkgSettings.SourceType == "programs" || pkgSettings.SourceType == "dotnet")
                     {
                         packageConfig.SourceType = pkgSettings.SourceType;
                     }
