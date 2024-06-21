@@ -219,6 +219,8 @@ that uses these options.");
                 ChocolateyPackageMetadata packageLocalMetadata;
                 string packageInstallLocation = null;
                 string deploymentLocation = null;
+                string packageInstalledFrom = null;
+
                 if (package.PackagePath != null && !string.IsNullOrWhiteSpace(package.PackagePath))
                 {
                     packageLocalMetadata = new ChocolateyPackageMetadata(package.PackagePath, _fileSystem);
@@ -241,6 +243,8 @@ that uses these options.");
                     }
 
                     deploymentLocation = packageInfo.DeploymentLocation;
+                    packageInstalledFrom = packageInfo.PackageInstalledFrom;
+
                     if (!string.IsNullOrWhiteSpace(packageInfo.Arguments))
                     {
                         var decryptedArguments = ArgumentsUtility.DecryptPackageArgumentsFile(_fileSystem, packageInfo.Package.Id, packageInfo.Package.Version.ToNormalizedStringChecked());
@@ -273,7 +277,7 @@ that uses these options.");
  Tags: {9}
  Software Site: {10}
  Software License: {11}{12}{13}{14}{15}{16}
- Description: {17}{18}{19}{20}
+ Description: {17}{18}{19}{20}{21}
 ".FormatWith(
                                 package.Title.EscapeCurlyBraces(),
                                 package.Published.GetValueOrDefault().UtcDateTime.ToShortDateString(),
@@ -309,6 +313,7 @@ that uses these options.");
                                 package.Description.EscapeCurlyBraces().Replace("\n    ", "\n").Replace("\n", "\n  "),
                                 !string.IsNullOrWhiteSpace(package.ReleaseNotes.ToStringSafe()) ? "{0} Release Notes: {1}".FormatWith(Environment.NewLine, package.ReleaseNotes.EscapeCurlyBraces().Replace("\n    ", "\n").Replace("\n", "\n  ")) : string.Empty,
                                 !string.IsNullOrWhiteSpace(deploymentLocation) ? "{0} Deployed to: '{1}'".FormatWith(Environment.NewLine, deploymentLocation) : string.Empty,
+                                !string.IsNullOrWhiteSpace(packageInstalledFrom) ? "{0} Package Installed From: '{1}'".FormatWith(Environment.NewLine, packageInstalledFrom) : string.Empty,
                                 packageArgumentsUnencrypted != null ? packageArgumentsUnencrypted : string.Empty
                             ));
                         }
@@ -925,7 +930,7 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                             packageRemoteMetadata.PackageTestResultStatus == "Failing" && packageRemoteMetadata.IsDownloadCacheAvailable ? " - Likely broken for FOSS users (due to download location changes)" : packageRemoteMetadata.PackageTestResultStatus == "Failing" ? " - Possibly broken" : string.Empty
                         ));
 
-                        var packageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath));
+                        var packageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe()));
                         if (shouldAddForcedResultMessage)
                         {
                             packageResult.Messages.Add(new ResultMessage(ResultType.Note, "Backing up and removing old version"));
@@ -1692,7 +1697,7 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                                     packageRemoteMetadata.PackageTestResultStatus == "Failing" && packageRemoteMetadata.IsDownloadCacheAvailable ? " - Likely broken for FOSS users (due to download location changes)" : packageRemoteMetadata.PackageTestResultStatus == "Failing" ? " - Possibly broken" : string.Empty
                                 ));
 
-                                var upgradePackageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath));
+                                var upgradePackageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe()));
                                 upgradePackageResult.ResetMetadata(packageMetadata, packageRemoteMetadata);
                                 upgradePackageResult.InstallLocation = installedPath;
 

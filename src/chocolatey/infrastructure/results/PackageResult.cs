@@ -103,7 +103,7 @@ namespace chocolatey.infrastructure.results
             */
         }
 
-        public PackageResult(IPackageMetadata packageMetadata, IPackageSearchMetadata packageSearch, string installLocation, string source = null) : this(packageMetadata.Id, packageMetadata.Version.ToNormalizedStringChecked(), installLocation)
+        public PackageResult(IPackageMetadata packageMetadata, IPackageSearchMetadata packageSearch, string installLocation, string source = null, string sourceUri = null) : this(packageMetadata.Id, packageMetadata.Version.ToNormalizedStringChecked(), installLocation)
         {
             SearchMetadata = packageSearch;
             PackageMetadata = packageMetadata;
@@ -123,6 +123,7 @@ namespace chocolatey.infrastructure.results
             }
 
             Source = sources.FirstOrDefault(uri => uri.IsFile || uri.IsUnc).ToStringSafe();
+            SourceUri = sourceUri;
         }
 
         public PackageResult(string name, string version, string installLocation, string source = null)
