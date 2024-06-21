@@ -593,6 +593,7 @@ Did you know Pro / Business automatically syncs with Programs and
             }
 
             pkgInfo.DeploymentLocation = Environment.GetEnvironmentVariable(ApplicationParameters.Environment.ChocolateyPackageInstallLocation);
+            pkgInfo.PackageInstalledFrom = packageResult.SourceUri;
 
             UpdatePackageInformation(pkgInfo);
             EnsureBadPackagesPathIsClean(packageResult);
