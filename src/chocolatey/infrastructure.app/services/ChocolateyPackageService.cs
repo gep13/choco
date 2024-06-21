@@ -260,13 +260,6 @@ Did you know Pro / Business automatically syncs with Programs and
                 // This doesn't make sense as a Debug message to me... Debug messages don't really show up when you're running normally...
                 this.Log().Debug(() => "Searching for package information");
             }
-            else
-            {
-                if (config.DisplayHeaders)
-                {
-                    this.Log().Info("PackageID|Version");
-                }
-            }
 
             var packages = new List<PackageResult>();
 
