@@ -298,11 +298,11 @@ that uses these options.");
                         {
                             this.Log().Info(logger, () => "{0}|nuget".FormatWith(package.Identity.Id));
                         }
-                        else if(!config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources)
+                        else if(!config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources && !config.ListCommand.IncludeRegistryPrograms)
                         {
                             this.Log().Info(logger, () => "{0}|{1}".FormatWith(package.Identity.Id, package.Identity.Version.ToFullStringChecked()));
                         }
-                        else if(config.ListCommand.IncludeAlternativeSources)
+                        else if(config.ListCommand.IncludeAlternativeSources || config.ListCommand.IncludeRegistryPrograms)
                         {
                             this.Log().Info(logger, () => "{0}|{1}|nuget".FormatWith(package.Identity.Id, package.Identity.Version.ToFullStringChecked()));
                         }
