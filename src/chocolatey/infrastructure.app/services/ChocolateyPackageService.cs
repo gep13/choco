@@ -265,6 +265,26 @@ Did you know Pro / Business automatically syncs with Programs and
 
             IEnumerable<PackageResult> results;
 
+            if (config.DisplayHeaders && !config.RegularOutput)
+            {
+                if (config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources)
+                {
+                    this.Log().Info("Id");
+                }
+                else if (config.ListCommand.IdOnly && config.ListCommand.IncludeAlternativeSources)
+                {
+                    this.Log().Info("Id|SourceType");
+                }
+                else if (!config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources && !config.ListCommand.IncludeRegistryPrograms)
+                {
+                    this.Log().Info("Id|Version");
+                }
+                else if (config.ListCommand.IncludeAlternativeSources || config.ListCommand.IncludeRegistryPrograms)
+                {
+                    this.Log().Info("Id|Version|SourceType");
+                }
+            }
+
             if (config.ListCommand.LocalOnly && !config.SourceType.IsEqualTo(SourceTypes.Normal))
             {
                 results = PerformSourceRunnerFunction<IListSourceRunner, IEnumerable<PackageResult>>(config, runner => runner.List(config));
@@ -354,7 +374,14 @@ Did you know Pro / Business automatically syncs with Programs and
                 }
                 else
                 {
-                    this.Log().Info("{0}|{1}|programs".FormatWith(key.DisplayName, key.DisplayVersion));
+                    if(config.IsAuditModeEnabled())
+                    {
+                        this.Log().Info("{0}|{1}|programs|||||".FormatWith(key.DisplayName, key.DisplayVersion));
+                    }
+                    else
+                    {
+                        this.Log().Info("{0}|{1}|programs".FormatWith(key.DisplayName, key.DisplayVersion));
+                    }
                 }
                 count++;
 

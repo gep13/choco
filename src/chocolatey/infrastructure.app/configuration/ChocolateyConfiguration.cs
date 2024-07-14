@@ -277,6 +277,11 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         public bool Noop { get; set; }
         public bool HelpRequested { get; set; }
 
+        public virtual bool IsAuditModeEnabled()
+        {
+            return false;
+        }
+
         /// <summary>
         ///   Gets or sets a value indicating whether parsing was successful (everything parsed) or not.
         /// </summary>

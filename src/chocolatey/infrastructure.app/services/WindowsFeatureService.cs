@@ -284,7 +284,28 @@ namespace chocolatey.infrastructure.app.services
                                     }
                                     else
                                     {
-                                        this.Log().Info("{0}|N/A|windowsfeatures".FormatWith(packageResult.Identity.Id));
+                                        if (config.ListCommand.IncludeAlternativeSources)
+                                        {
+                                            if (config.IsAuditModeEnabled())
+                                            {
+                                                this.Log().Info("{0}|N/A|windowsfeatures|||||".FormatWith(packageResult.Identity.Id));
+                                            }
+                                            else
+                                            {
+                                                this.Log().Info("{0}|N/A|windowsfeatures".FormatWith(packageResult.Identity.Id));
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (config.IsAuditModeEnabled())
+                                            {
+                                                this.Log().Info("{0}|N/A|||||".FormatWith(packageResult.Identity.Id));
+                                            }
+                                            else
+                                            {
+                                                this.Log().Info("{0}|N/A".FormatWith(packageResult.Identity.Id));
+                                            }
+                                        }
                                     }
                                     
                                     count++;

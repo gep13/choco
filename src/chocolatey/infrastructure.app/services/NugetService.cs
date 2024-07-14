@@ -188,28 +188,6 @@ that uses these options.");
             {
                 this.Log().Debug(ChocolateyLoggers.Verbose, () => "--- Start of List ---");
             }
-            else
-            {
-                if (config.DisplayHeaders)
-                {
-                    if (config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources)
-                    {
-                        this.Log().Info("Id");
-                    }
-                    else if (config.ListCommand.IdOnly && config.ListCommand.IncludeAlternativeSources)
-                    {
-                        this.Log().Info("Id|SourceType");
-                    }
-                    else if (!config.ListCommand.IdOnly && !config.ListCommand.IncludeAlternativeSources && !config.ListCommand.IncludeRegistryPrograms)
-                    {
-                        this.Log().Info("Id|Version");
-                    }
-                    else if (config.ListCommand.IncludeAlternativeSources || config.ListCommand.IncludeRegistryPrograms)
-                    {
-                        this.Log().Info("Id|Version|SourceType");
-                    }
-                }
-            }
 
             foreach (var pkg in NugetList.GetPackages(config, _nugetLogger, _fileSystem))
             {
