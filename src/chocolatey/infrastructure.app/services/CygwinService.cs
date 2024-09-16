@@ -248,7 +248,9 @@ namespace chocolatey.infrastructure.app.services
                             if (_installedRegex.IsMatch(logMessage))
                             {
                                 var packageName = GetValueFromOutput(logMessage, _packageNameRegex, PackageNameGroup);
-                                var results = packageResults.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                                var packageResult = new PackageResult(packageName, null, null);
+                                packageResult.Source = SourceTypes.Cygwin;
+                                var results = packageResults.GetOrAdd(packageName, packageResult);
                                 results.Messages.Add(new ResultMessage(ResultType.Note, packageName));
                                 this.Log().Info(ChocolateyLoggers.Important, " {0} has been installed successfully.".FormatWith(string.IsNullOrWhiteSpace(packageName) ? packageToInstall : packageName));
                             }

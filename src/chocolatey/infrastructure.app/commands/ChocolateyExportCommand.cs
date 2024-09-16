@@ -33,6 +33,7 @@ using System.Linq;
 using chocolatey.infrastructure.results;
 using chocolatey.infrastructure.configuration;
 using System.IO.Packaging;
+using chocolatey.infrastructure.app.domain;
 
 namespace chocolatey.infrastructure.app.commands
 {
@@ -200,7 +201,7 @@ If you find other exit codes that we have not yet documented, please
                                         xw.WriteAttributeString("version", key.DisplayVersion);
                                     }
 
-                                    xw.WriteAttributeString("sourceType", "programs");
+                                    xw.WriteAttributeString("sourceType", SourceTypes.AddRemovePrograms);
 
                                     xw.WriteEndElement();
                                 }

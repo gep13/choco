@@ -324,11 +324,17 @@ that uses these options.");
 
                 if (packageLocalMetadata is null)
                 {
-                    yield return new PackageResult(package, null, config.Sources);
+                    var packageResult = new PackageResult(package, null, config.Sources);
+                    packageResult.Source = SourceTypes.Normal;
+                    packageResult.SourceUri = packageInstalledFrom;
+                    yield return packageResult;
                 }
                 else
                 {
-                    yield return new PackageResult(packageLocalMetadata, package, config.ListCommand.LocalOnly ? packageInstallLocation : null, config.Sources);
+                    var packageResult = new PackageResult(packageLocalMetadata, package, config.ListCommand.LocalOnly ? packageInstallLocation : null, config.Sources);
+                    packageResult.Source = SourceTypes.Normal;
+                    packageResult.SourceUri = packageInstalledFrom;
+                    yield return packageResult;
                 }
             }
 
@@ -671,7 +677,9 @@ Version was specified as '{0}'. It is possible that version
 Please see https://docs.chocolatey.org/en-us/troubleshooting for more
  assistance.");
                     this.Log().Error(ChocolateyLoggers.Important, logMessage);
-                    var noPkgResult = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(packageName, version.ToFullStringChecked(), null));
+                    var packageResult = new PackageResult(packageName, version.ToFullStringChecked(), null);
+                    packageResult.Source = SourceTypes.Normal;
+                    var noPkgResult = packageResultsToReturn.GetOrAdd(packageName, packageResult);
                     noPkgResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                     continue;
                 }
@@ -803,7 +811,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                         foreach (var pkgMetadata in packagesToInstall)
                         
                         {
-                            var errorResult = packageResultsToReturn.GetOrAdd(pkgMetadata.Identity.Id, new PackageResult(pkgMetadata, pathResolver.GetInstallPath(pkgMetadata.Identity)));
+                            var packageResult = new PackageResult(pkgMetadata, pathResolver.GetInstallPath(pkgMetadata.Identity));
+                            packageResult.Source = SourceTypes.Normal;
+                            var errorResult = packageResultsToReturn.GetOrAdd(pkgMetadata.Identity.Id, packageResult);
                             errorResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
                     }
@@ -908,7 +918,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                             packageRemoteMetadata.PackageTestResultStatus == "Failing" && packageRemoteMetadata.IsDownloadCacheAvailable ? " - Likely broken for FOSS users (due to download location changes)" : packageRemoteMetadata.PackageTestResultStatus == "Failing" ? " - Possibly broken" : string.Empty
                         ));
 
-                        var packageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe()));
+                        var newPackageResult = new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe());
+                        newPackageResult.Source = SourceTypes.Normal;
+                        var packageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), newPackageResult);
                         if (shouldAddForcedResultMessage)
                         {
                             packageResult.Messages.Add(new ResultMessage(ResultType.Note, "Backing up and removing old version"));
@@ -949,7 +961,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
 
                         var logMessage = "{0} not installed. An error occurred during installation:{1} {2}".FormatWith(packageDependencyInfo.Id, Environment.NewLine, message);
                         this.Log().Error(ChocolateyLoggers.Important, logMessage);
-                        var errorResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id, new PackageResult(packageDependencyInfo.Id, version.ToFullStringChecked(), null));
+                        var packageResult = new PackageResult(packageDependencyInfo.Id, version.ToFullStringChecked(), null);
+                        packageResult.Source = SourceTypes.Normal;
+                        var errorResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id, packageResult);
                         errorResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         if (errorResult.ExitCode == 0)
                         {
@@ -1097,7 +1111,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     if (config.UpgradeCommand.FailOnNotInstalled)
                     {
                         var failLogMessage = "{0} is not installed. Cannot upgrade a non-existent package.".FormatWith(packageName);
-                        var result = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                        var cantUpgradePackageResult = new PackageResult(packageName, null, null);
+                        cantUpgradePackageResult.Source = SourceTypes.Normal;
+                        var result = packageResultsToReturn.GetOrAdd(packageName, cantUpgradePackageResult);
                         result.Messages.Add(new ResultMessage(ResultType.Error, failLogMessage));
                         if (config.RegularOutput)
                         {
@@ -1110,7 +1126,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     if (config.Features.SkipPackageUpgradesWhenNotInstalled)
                     {
                         var warnLogMessage = "{0} is not installed and skip non-installed option selected. Skipping...".FormatWith(packageName);
-                        var result = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                        var notInstalledPackageResult = new PackageResult(packageName, null, null);
+                        notInstalledPackageResult.Source = SourceTypes.Normal;
+                        var result = packageResultsToReturn.GetOrAdd(packageName, notInstalledPackageResult);
                         result.Messages.Add(new ResultMessage(ResultType.Warn, warnLogMessage));
                         if (config.RegularOutput)
                         {
@@ -1162,7 +1180,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                 if (version != null && version < installedPackage.PackageMetadata.Version && !config.AllowDowngrade)
                 {
                     var logMessage = "A newer version of {0} (v{1}) is already installed.{2} Use --allow-downgrade or --force to attempt to upgrade to older versions.".FormatWith(installedPackage.PackageMetadata.Id, installedPackage.Version, Environment.NewLine);
-                    var nullResult = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                    var newerVersionPackageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                    newerVersionPackageResult.Source = SourceTypes.Normal;
+                    var nullResult = packageResultsToReturn.GetOrAdd(packageName, newerVersionPackageResult);
                     nullResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                     this.Log().Error(ChocolateyLoggers.Important, logMessage);
                     continue;
@@ -1187,7 +1207,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     }
 
                     var logMessage = "{0} was not found with the source(s) listed.{1} If you specified a particular version and are receiving this message, it is possible that the package name exists but the version does not.{1} Version: \"{2}\"; Source(s): \"{3}\"".FormatWith(packageName, Environment.NewLine, config.Version, config.Sources);
-                    var unfoundResult = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(packageName, version.ToFullStringChecked(), null));
+                    var notFoundPackageResult = new PackageResult(packageName, version.ToFullStringChecked(), null);
+                    notFoundPackageResult.Source = SourceTypes.Normal;
+                    var unfoundResult = packageResultsToReturn.GetOrAdd(packageName, notFoundPackageResult);
 
                     if (config.UpgradeCommand.FailOnUnfound)
                     {
@@ -1215,7 +1237,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     continue;
                 }
 
-                var packageResult = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(availablePackage, pathResolver.GetInstallPath(availablePackage.Identity)));
+                var newPackageResult = new PackageResult(availablePackage, pathResolver.GetInstallPath(availablePackage.Identity));
+                newPackageResult.Source = SourceTypes.Normal;
+                var packageResult = packageResultsToReturn.GetOrAdd(packageName, newPackageResult);
                 if (installedPackage.PackageMetadata.Version > availablePackage.Identity.Version && (!config.AllowDowngrade || (config.AllowDowngrade && version == null)))
                 {
                     var logMessage = "{0} v{1} is newer than the most recent.".FormatWith(installedPackage.PackageMetadata.Id, installedPackage.Version);
@@ -1544,7 +1568,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
 
                                     foreach (var pkgMetadata in packagesToInstall)
                                     {
-                                        var errorResult = packageResultsToReturn.GetOrAdd(pkgMetadata.Identity.Id, new PackageResult(pkgMetadata, pathResolver.GetInstallPath(pkgMetadata.Identity)));
+                                        var dependencyPackageResult = new PackageResult(pkgMetadata, pathResolver.GetInstallPath(pkgMetadata.Identity));
+                                        dependencyPackageResult.Source = SourceTypes.Normal;
+                                        var errorResult = packageResultsToReturn.GetOrAdd(pkgMetadata.Identity.Id, dependencyPackageResult);
                                         errorResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                                     }
                                 }
@@ -1575,7 +1601,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                                 {
                                     // In general, this value should already be set. But just in case
                                     // it isn't we create a new package result.
-                                    return new PackageResult(availablePackage, string.Empty);
+                                    var existingPackageResult = new PackageResult(availablePackage, string.Empty);
+                                    existingPackageResult.Source = SourceTypes.Normal;
+                                    return existingPackageResult;
                                 });
                                 existingPackage.Messages.Add(message);
 
@@ -1675,7 +1703,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                                     packageRemoteMetadata.PackageTestResultStatus == "Failing" && packageRemoteMetadata.IsDownloadCacheAvailable ? " - Likely broken for FOSS users (due to download location changes)" : packageRemoteMetadata.PackageTestResultStatus == "Failing" ? " - Possibly broken" : string.Empty
                                 ));
 
-                                var upgradePackageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe()));
+                                var newUpgradePackageResult = new PackageResult(packageMetadata, packageRemoteMetadata, installedPath, null, packageDependencyInfo.Source.ToStringSafe());
+                                newUpgradePackageResult.Source = SourceTypes.Normal;
+                                var upgradePackageResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id.ToLowerSafe(), newUpgradePackageResult);
                                 upgradePackageResult.ResetMetadata(packageMetadata, packageRemoteMetadata);
                                 upgradePackageResult.InstallLocation = installedPath;
 
@@ -1724,7 +1754,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
 
                                 var logMessage = "{0} not upgraded. An error occurred during installation:{1} {2}".FormatWith(packageName, Environment.NewLine, message);
                                 this.Log().Error(ChocolateyLoggers.Important, logMessage);
-                                var errorResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id, new PackageResult(packageDependencyInfo.Id, version.ToFullStringChecked(), null));
+                                var errorPackageResult = new PackageResult(packageDependencyInfo.Id, version.ToFullStringChecked(), null);
+                                errorPackageResult.Source = SourceTypes.Normal;
+                                var errorResult = packageResultsToReturn.GetOrAdd(packageDependencyInfo.Id, errorPackageResult);
                                 errorResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                                 if (errorResult.ExitCode == 0)
                                 {
@@ -1779,7 +1811,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                 if (isPinned && config.OutdatedCommand.IgnorePinned)
                 {
                     var pinnedLogMessage = "{0} is pinned. Skipping pinned package.".FormatWith(packageName);
-                    var pinnedPackageResult = outdatedPackages.GetOrAdd(packageName, new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                    var newPinnedPackageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                    newPinnedPackageResult.Source = SourceTypes.Normal;
+                    var pinnedPackageResult = outdatedPackages.GetOrAdd(packageName, newPinnedPackageResult);
                     pinnedPackageResult.Messages.Add(new ResultMessage(ResultType.Debug, pinnedLogMessage));
                     pinnedPackageResult.Messages.Add(new ResultMessage(ResultType.Inconclusive, pinnedLogMessage));
 
@@ -1802,7 +1836,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     }
 
                     var unfoundLogMessage = "{0} was not found with the source(s) listed.{1} Source(s): \"{2}\"".FormatWith(packageName, Environment.NewLine, config.Sources);
-                    var unfoundResult = outdatedPackages.GetOrAdd(packageName, new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                    var unfoundPackageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                    unfoundPackageResult.Source = SourceTypes.Normal;
+                    var unfoundResult = outdatedPackages.GetOrAdd(packageName, unfoundPackageResult);
                     unfoundResult.Messages.Add(new ResultMessage(ResultType.Warn, unfoundLogMessage));
                     unfoundResult.Messages.Add(new ResultMessage(ResultType.Inconclusive, unfoundLogMessage));
 
@@ -1815,7 +1851,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     continue;
                 }
 
-                var packageResult = outdatedPackages.GetOrAdd(packageName, new PackageResult(latestPackage, pathResolver.GetInstallPath(latestPackage.Identity)));
+                var initialPackageResult = new PackageResult(latestPackage, pathResolver.GetInstallPath(latestPackage.Identity));
+                initialPackageResult.Source = SourceTypes.Normal;
+                var packageResult = outdatedPackages.GetOrAdd(packageName, initialPackageResult);
 
                 var logMessage = "You have {0} v{1} installed. Version {2} is available based on your source(s).{3} Source(s): \"{4}\"".FormatWith(installedPackage.Name, installedPackage.Version, latestPackage.Identity.Version, Environment.NewLine, config.Sources);
                 packageResult.Messages.Add(new ResultMessage(ResultType.Note, logMessage));
@@ -2342,7 +2380,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                         else
                         {
                             var logMessage = "To finish removing {0}, please also run the command: `choco uninstall {1}`.".FormatWith(packageName, actualPackageName);
-                            var actualPackageResult = packageResultsToReturn.GetOrAdd(actualPackageName, new PackageResult(actualPackageName, null, null));
+                            var packageResult = new PackageResult(actualPackageName, null, null);
+                            packageResult.Source = SourceTypes.Normal;
+                            var actualPackageResult = packageResultsToReturn.GetOrAdd(actualPackageName, packageResult);
                             actualPackageResult.Messages.Add(new ResultMessage(ResultType.Warn, logMessage));
                             actualPackageResult.Messages.Add(new ResultMessage(ResultType.Inconclusive, logMessage));
                         }
@@ -2382,7 +2422,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                 if (installedPackageVersions.Count == 0)
                 {
                     var logMessage = "{0} is not installed. Cannot uninstall a non-existent package.".FormatWith(packageName);
-                    var missingResult = packageResultsToReturn.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                    var packageResult = new PackageResult(packageName, null, null);
+                    packageResult.Source = SourceTypes.Normal;
+                    var missingResult = packageResultsToReturn.GetOrAdd(packageName, packageResult);
                     missingResult.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
 
                     if (config.RegularOutput)
@@ -2465,7 +2507,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                 if (pkgInfo != null && pkgInfo.IsPinned)
                 {
                     var logMessage = "{0} is pinned. Skipping pinned package.".FormatWith(installedPackage.Name);
-                    var pinnedResult = packageResultsToReturn.GetOrAdd(installedPackage.Name, new PackageResult(installedPackage.Name, null, null));
+                    var packageResult = new PackageResult(installedPackage.Name, null, null);
+                    packageResult.Source = SourceTypes.Normal;
+                    var pinnedResult = packageResultsToReturn.GetOrAdd(installedPackage.Name, packageResult);
                     pinnedResult.Messages.Add(new ResultMessage(ResultType.Warn, logMessage));
                     pinnedResult.Messages.Add(new ResultMessage(ResultType.Inconclusive, logMessage));
                     if (config.RegularOutput)
@@ -2498,14 +2542,18 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                     catch (Exception ex)
                     {
                         this.Log().Warn("[NuGet]: {0}", ex.Message);
-                        var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version, (key) => new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                        var packageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                        packageResult.Source = SourceTypes.Normal;
+                        var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version, (key) => packageResult);
                         result.Messages.Add(new ResultMessage(ResultType.Error, ex.Message));
                         continue;
                     }
 
                     if (resolvedPackages is null)
                     {
-                        var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version, (key) => new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                        var packageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                        packageResult.Source = SourceTypes.Normal;
+                        var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version, (key) => packageResult);
                         result.Messages.Add(new ResultMessage(ResultType.Error, "Unable to resolve dependency context. Not able to uninstall package."));
                         continue;
                     }
@@ -2588,7 +2636,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                         {
                             var logMessage = "{0} not uninstalled. An error occurred during uninstall:{1} {2}".FormatWith(installedPackage.Name, Environment.NewLine, ex.Message);
                             this.Log().Error(ChocolateyLoggers.Important, logMessage);
-                            var result = packageResultsToReturn.GetOrAdd(packageToUninstall.Name + "." + packageToUninstall.Version.ToStringSafe(), new PackageResult(packageToUninstall.PackageMetadata, pathResolver.GetInstallPath(packageToUninstall.PackageMetadata.Id)));
+                            var packageResult = new PackageResult(packageToUninstall.PackageMetadata, pathResolver.GetInstallPath(packageToUninstall.PackageMetadata.Id));
+                            packageResult.Source = SourceTypes.Normal;
+                            var result = packageResultsToReturn.GetOrAdd(packageToUninstall.Name + "." + packageToUninstall.Version.ToStringSafe(), packageResult);
                             result.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                             if (result.ExitCode == 0)
                             {
@@ -2606,7 +2656,9 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                 else
                 {
                     // continue action won't be found b/c we are not actually uninstalling (this is noop)
-                    var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version.ToStringSafe(), new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id)));
+                    var packageResult = new PackageResult(installedPackage.PackageMetadata, pathResolver.GetInstallPath(installedPackage.PackageMetadata.Id));
+                    packageResult.Source = SourceTypes.Normal;
+                    var result = packageResultsToReturn.GetOrAdd(installedPackage.Name + "." + installedPackage.Version.ToStringSafe(), packageResult);
                     if (continueAction != null)
                     {
                         continueAction.Invoke(result, config);
@@ -2699,6 +2751,7 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
                         "chocolatey".Log().Debug("Running beforeModify step for '{0}'", packageResult.PackageMetadata.Id);
 
                         var packageResultCopy = new PackageResult(packageResult.PackageMetadata, packageResult.SearchMetadata, packageResult.InstallLocation, packageResult.Source);
+                        packageResultCopy.Source = SourceTypes.Normal;
 
                         beforeModifyAction(packageResultCopy, config);
 

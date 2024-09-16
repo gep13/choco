@@ -225,6 +225,7 @@ namespace chocolatey.infrastructure.app.services
                             if (match.Groups[2].Value.Trim() == "Enabled")
                             {
                                 var packageResult = new PackageResult(match.Groups[1].Value.Trim(), "1.0.0", string.Empty);
+                                packageResult.Source = SourceTypes.WindowsFeatures;
                                 packageResults.Add(packageResult);
                             }
                         }
@@ -276,6 +277,7 @@ namespace chocolatey.infrastructure.app.services
                                 if (match.Groups[2].Value.Trim() == "Enabled")
                                 {
                                     var packageResult = new PackageResult(match.Groups[1].Value.Trim(), "1.0.0", string.Empty);
+                                    packageResult.Source = SourceTypes.WindowsFeatures;
                                     packageResults.Add(packageResult);
 
                                     if(config.RegularOutput)
@@ -394,7 +396,9 @@ namespace chocolatey.infrastructure.app.services
             foreach (var packageToInstall in config.PackageNames.Split(new[] { ApplicationParameters.PackageNamesSeparator }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var packageName = packageToInstall;
-                var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageName, null, null));
+                var packageResult = new PackageResult(packageName, null, null);
+                packageResult.Source = SourceTypes.WindowsFeatures;
+                var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                 var argsForPackage = args.Replace(PackageNameToken, packageName);
 
                 //todo: #2574 detect windows feature is already enabled
@@ -473,7 +477,9 @@ namespace chocolatey.infrastructure.app.services
             foreach (var packageToInstall in config.PackageNames.Split(new[] { ApplicationParameters.PackageNamesSeparator }, StringSplitOptions.RemoveEmptyEntries))
             {
                 var packageName = packageToInstall;
-                var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageName, null, null));
+                var packageResult = new PackageResult(packageName, null, null);
+                packageResult.Source = SourceTypes.WindowsFeatures;
+                var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                 var argsForPackage = args.Replace(PackageNameToken, packageName);
 
                 //todo: #2574 detect windows feature is already disabled

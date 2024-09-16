@@ -433,14 +433,18 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
 
                         if (_installedRegex.IsMatch(logMessage))
                         {
                             var packageName = GetValueFromOutput(logMessage, _packageNameRegex, PackageNameGroup);
-                            var results = packageResults.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                            var packageResult = new PackageResult(packageName, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageName, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Note, packageName));
                             this.Log().Info(ChocolateyLoggers.Important, " {0} has been installed successfully.".FormatWith(string.IsNullOrWhiteSpace(packageName) ? packageToInstall : packageName));
                         }
@@ -457,7 +461,9 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
                     },
@@ -520,14 +526,18 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
 
                         if (_installedRegex.IsMatch(logMessage))
                         {
                             var packageName = GetValueFromOutput(logMessage, _packageNameRegex, PackageNameGroup);
-                            var results = packageResults.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                            var packageResult = new PackageResult(packageName, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageName, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Note, packageName));
                             this.Log().Info(ChocolateyLoggers.Important, " {0} has been installed successfully.".FormatWith(string.IsNullOrWhiteSpace(packageName) ? packageToInstall : packageName));
                         }
@@ -544,7 +554,9 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
                     },
@@ -595,14 +607,18 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, packageToInstall));
                         }
 
                         if (_uninstalledRegex.IsMatch(logMessage))
                         {
                             var packageName = GetValueFromOutput(logMessage, _packageNameRegex, PackageNameGroup);
-                            var results = packageResults.GetOrAdd(packageName, new PackageResult(packageName, null, null));
+                            var packageResult = new PackageResult(packageName, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageName, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Note, packageName));
                             this.Log().Info(ChocolateyLoggers.Important, " {0} has been uninstalled successfully.".FormatWith(string.IsNullOrWhiteSpace(packageName) ? packageToInstall : packageName));
                         }
@@ -619,7 +635,9 @@ namespace chocolatey.infrastructure.app.services
 
                         if (_errorRegex.IsMatch(logMessage) || _errorNotFoundRegex.IsMatch(logMessage))
                         {
-                            var results = packageResults.GetOrAdd(packageToInstall, new PackageResult(packageToInstall, null, null));
+                            var packageResult = new PackageResult(packageToInstall, null, null);
+                            packageResult.Source = SourceTypes.Python;
+                            var results = packageResults.GetOrAdd(packageToInstall, packageResult);
                             results.Messages.Add(new ResultMessage(ResultType.Error, logMessage));
                         }
                     },

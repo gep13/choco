@@ -308,10 +308,7 @@ Did you know Pro / Business automatically syncs with Programs and
             {
                 if (config.SourceType.IsEqualTo(SourceTypes.Normal))
                 {
-                    if (!config.ListCommand.IncludeRegistryPrograms)
-                    {
-                        yield return package;
-                    }
+                    yield return package;
 
                     if (config.ListCommand.LocalOnly && config.ListCommand.IncludeRegistryPrograms && package.PackageMetadata != null)
                     {
@@ -357,7 +354,7 @@ Did you know Pro / Business automatically syncs with Programs and
                      !itemsToRemoveFromMachine.Any(pkg => pkg.RegistrySnapshot.RegistryKeys.Any(k => k.DisplayName.IsEqualTo(p.DisplayName))) &&
                      !p.KeyPath.ContainsSafe("choco-")).OrderBy(p => p.DisplayName).Distinct();
 
-            if(config.RegularOutput)
+            if (config.RegularOutput)
             {
                 this.Log().Info(() => "");
             }
@@ -385,7 +382,10 @@ Did you know Pro / Business automatically syncs with Programs and
                 }
                 count++;
 
-                yield return new PackageResult(key.DisplayName, key.DisplayName, key.InstallLocation);
+                var packageResult = new PackageResult(key.DisplayName, key.DisplayName, key.InstallLocation);
+                packageResult.Source = SourceTypes.AddRemovePrograms;
+
+                yield return packageResult;
             }
 
             if (config.RegularOutput)
@@ -1018,7 +1018,7 @@ Would have determined packages that are out of date based on what is
                         packageConfig.ApplyPackageParametersToDependencies = true;
                     }
 
-                    if ((!string.IsNullOrWhiteSpace(pkgSettings.SourceType) && HasSourceType(pkgSettings.SourceType, alternativeSourceRunners)) || pkgSettings.SourceType == "programs" || pkgSettings.SourceType == "dotnet")
+                    if ((!string.IsNullOrWhiteSpace(pkgSettings.SourceType) && HasSourceType(pkgSettings.SourceType, alternativeSourceRunners)) || pkgSettings.SourceType == SourceTypes.AddRemovePrograms || pkgSettings.SourceType == "dotnet")
                     {
                         packageConfig.SourceType = pkgSettings.SourceType;
                     }
