@@ -182,12 +182,12 @@ If you find other exit codes that we have not yet documented, please
 
                                 xw.WriteAttributeString("sourceType", "nuget");
 
-                                xw.WriteEndElement();
+                                packagesConfig.Packages.Add(packageElement);
                             }
 
                             if (configuration.ExportCommand.IncludeRegistryPrograms)
                             {
-                                var itemsToRemoveFromMachine = packageResults.Select(package => _packageInfoService.Get(package.PackageMetadata)).Where(p => p.RegistrySnapshot != null).ToList();
+                                var itemsToRemoveFromMachine = installedPackages.Select(package => _packageInfoService.Get(package.PackageMetadata)).Where(p => p.RegistrySnapshot != null).ToList();
 
                                 var machineInstalled = _registryService.GetInstallerKeys().RegistryKeys.Where(
                                     p => p.IsInProgramsAndFeatures() &&
@@ -231,8 +231,10 @@ If you find other exit codes that we have not yet documented, please
                                 }
                             }
 
-                            xw.WriteEndElement();
-                            xw.Flush();
+                            var ns = new XmlSerializerNamespaces();
+                            ns.Add("", "");
+                            var packagesConfigSerializer = new XmlSerializer(typeof(PackagesConfigFileSettings));
+                            packagesConfigSerializer.Serialize(xw, packagesConfig, ns);
                         }
 
                         var fullOutputFilePath = _fileSystem.GetFullPath(configuration.ExportCommand.OutputFilePath);
