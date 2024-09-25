@@ -620,6 +620,7 @@ NOTE: Hiding sensitive configuration data! Please double and triple
         public string PackageNamesToSkip { get; set; }
         public bool ExcludePrerelease { get; set; }
         public bool IgnorePinned { get; set; }
+        public bool IncludeAlternativeSources { get; set; }
     }
 
     [Serializable]

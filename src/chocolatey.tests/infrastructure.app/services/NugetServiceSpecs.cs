@@ -27,6 +27,7 @@ using NuGet.Common;
 using NuGet.Packaging;
 using FluentAssertions;
 using IFileSystem = chocolatey.infrastructure.filesystem.IFileSystem;
+using chocolatey.infrastructure.app.registration;
 
 namespace chocolatey.tests.infrastructure.app.services
 {
@@ -42,6 +43,7 @@ namespace chocolatey.tests.infrastructure.app.services
             protected Mock<IPackageMetadata> Package = new Mock<IPackageMetadata>();
             protected Mock<IPackageDownloader> PackageDownloader = new Mock<IPackageDownloader>();
             protected Mock<IRuleService> RuleService = new Mock<IRuleService>();
+            protected Mock<IContainerResolver> ContainerResolver = new Mock<IContainerResolver>();
 
             public override void Context()
             {
@@ -51,7 +53,7 @@ namespace chocolatey.tests.infrastructure.app.services
                 FilesService.ResetCalls();
                 Package.ResetCalls();
 
-                Service = new NugetService(FileSystem.Object, NugetLogger.Object, PackageInfoService.Object, FilesService.Object, RuleService.Object);
+                Service = new NugetService(FileSystem.Object, NugetLogger.Object, PackageInfoService.Object, FilesService.Object, RuleService.Object, ContainerResolver.Object);
             }
         }
 

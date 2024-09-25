@@ -49,6 +49,7 @@ using NuGet.ProjectManagement;
 using NuGet.Protocol.Core.Types;
 using NuGet.Resolver;
 using NuGet.Versioning;
+using chocolatey.infrastructure.app.registration;
 
 namespace chocolatey.infrastructure.app.services
 {
@@ -61,6 +62,7 @@ namespace chocolatey.infrastructure.app.services
         private readonly IChocolateyPackageInformationService _packageInfoService;
         private readonly IFilesService _filesService;
         private readonly IRuleService _ruleService;
+        private readonly IContainerResolver _containerResolver;
         //private readonly PackageDownloader _packageDownloader;
         private readonly Lazy<IDateTime> _datetime = new Lazy<IDateTime>(() => new DateTime());
 
@@ -90,13 +92,15 @@ install them.
             ILogger nugetLogger,
             IChocolateyPackageInformationService packageInfoService,
             IFilesService filesService,
-            IRuleService ruleService)
+            IRuleService ruleService,
+            IContainerResolver containerResolver)
         {
             _fileSystem = fileSystem;
             _nugetLogger = nugetLogger;
             _packageInfoService = packageInfoService;
             _filesService = filesService;
             _ruleService = ruleService;
+            _containerResolver = containerResolver;
         }
 
         public string SourceType
@@ -1777,6 +1781,27 @@ Please see https://docs.chocolatey.org/en-us/troubleshooting for more
             // configurations, and make sure that we are removing any backup that was created
             // as part of this run.
             config.RevertChanges(removeBackup: true);
+
+            var oldPackageNames = config.PackageNames;
+
+            if (config.UpgradeCommand.IncludeAlternativeSources)
+            {
+                foreach (var sourceRunner in _containerResolver.ResolveAll<IGetPackagesSourceRunner>())
+                {
+                    var alternativeSourcePackageNames = sourceRunner.GetInstalledPackages(config).ToList();
+
+                    if (alternativeSourcePackageNames.Any())
+                    {
+                        config.PackageNames = string.Join(";", alternativeSourcePackageNames.Select(a => a.Name));
+                        if (sourceRunner is IUpgradeSourceRunner)
+                        {
+                            packageResultsToReturn.AddRange((sourceRunner as IUpgradeSourceRunner).Upgrade(config, null));
+                        }
+                    }
+                }
+            }
+
+            config.PackageNames = oldPackageNames;
 
             return packageResultsToReturn;
         }

@@ -258,6 +258,9 @@ namespace chocolatey.infrastructure.app.commands
                     "Include Configured Sources - When using the '--source' option, this appends the sources that have been saved into the chocolatey.config file by 'source' command.  Available in 2.3.0+",
                     option => configuration.IncludeConfiguredSources = option != null
                     )
+                .Add("include-alternative-sources",
+                     "IncludeAlternativeSources - Includes software from alternative sources which are managed by Chocolatey CLI.",
+                     option => configuration.UpgradeCommand.IncludeAlternativeSources = option != null)
                 ;
         }
 
