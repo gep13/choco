@@ -204,7 +204,7 @@ If you find other exit codes that we have not yet documented, please
                                     packageElement.Version = packageResult.PackageMetadata.Version.ToString();
                                 }
 
-                                xw.WriteAttributeString("sourceType", "nuget");
+                                packageElement.SourceType = "nuget";
 
                                 if (configuration.ExportCommand.IncludeRememberedPackageArguments)
                                 {
@@ -291,7 +291,7 @@ If you find other exit codes that we have not yet documented, please
 
                                     if (!configuration.ExportCommand.ExcludePins && pkgInfo.IsPinned)
                                     {
-                                        xw.WriteAttributeString("pinPackage", "true");
+                                        packageElement.PinPackage = true;
                                     }
 
                                     // Make sure to reset the configuration so as to be able to parse the next set of remembered arguments
@@ -312,17 +312,19 @@ If you find other exit codes that we have not yet documented, please
 
                                 foreach (var key in machineInstalled)
                                 {
-                                    xw.WriteStartElement("package");
-                                    xw.WriteAttributeString("id", key.DisplayName);
+                                    var packageElement = new PackagesConfigFilePackageSetting
+                                    {
+                                        Id = key.DisplayName
+                                    };
 
                                     if (configuration.ExportCommand.IncludeVersionNumbers)
                                     {
-                                        xw.WriteAttributeString("version", key.DisplayVersion);
+                                        packageElement.Version = key.DisplayVersion;
                                     }
 
-                                    xw.WriteAttributeString("sourceType", SourceTypes.AddRemovePrograms);
+                                    packageElement.SourceType = SourceTypes.AddRemovePrograms;
 
-                                    xw.WriteEndElement();
+                                    packagesConfig.Packages.Add(packageElement);
                                 }
                             }
 
@@ -332,17 +334,19 @@ If you find other exit codes that we have not yet documented, please
                                 {
                                     foreach (var package in sourceRunner.GetInstalledPackages(configuration).ToList())
                                     {
-                                        xw.WriteStartElement("package");
-                                        xw.WriteAttributeString("id", package.Identity.Id);
+                                        var packageElement = new PackagesConfigFilePackageSetting
+                                        {
+                                            Id = package.Identity.Id
+                                        };
 
                                         if (configuration.ExportCommand.IncludeVersionNumbers)
                                         {
-                                            xw.WriteAttributeString("version", package.Identity.Version.ToString());
+                                            packageElement.Version = package.Identity.Version.ToString();
                                         }
 
-                                        xw.WriteAttributeString("sourceType", sourceRunner.SourceType);
+                                        packageElement.SourceType = sourceRunner.SourceType;
 
-                                        xw.WriteEndElement();
+                                        packagesConfig.Packages.Add(packageElement);
                                     }
                                 }
                             }
